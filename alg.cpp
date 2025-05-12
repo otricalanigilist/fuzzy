@@ -1,10 +1,8 @@
-// 1. На выходе должен быть этап дефазиффикации, например, методом центра тяжести 2. нет 3. Оба варианта
-
 #include "alg.h"
 
 using namespace std;
 
-// Треугольная функция принадлежности
+// Функция принадлежности
 double triangular(double x, double a, double b) {
     if (x < min(a, b) || x > max(a, b))
         return 0.0;
@@ -22,7 +20,7 @@ double mu_B1(double x) { return triangular(x, 100, 55); }
 double mu_B2(double x) { return triangular(x, 66, 25); }
 double mu_B3(double x) { return triangular(x, 35, 0); }
 
-// Выходные термы C1-C9, по аналогии (20, 30, 40), ..., (80, 90, 100)
+// Выходные C1-C9
 vector<function<double(double)>> C = {
     [](double y){ return triangular(y, 40, 0); }, // C1
     [](double y){ return triangular(y, 45, 25); }, // C2
@@ -72,23 +70,3 @@ double fuzzy_inference(double temp, double hum, bool useMamdani) {
     return (denominator == 0) ? 0 : numerator / denominator; // дефаззификация
 }
 
-// int main() {
-//     // Случайные входные значения
-//     random_device rd;
-//     mt19937 gen(rd());
-//     uniform_real_distribution<> temp_dist(-30, 0);
-//     uniform_real_distribution<> hum_dist(0, 100);
-//
-//     double temp = temp_dist(gen);
-//     double hum = hum_dist(gen);
-//
-//
-//     double y_mamdani = fuzzy_inference(temp, hum, true);
-//     double y_larsen  = fuzzy_inference(temp, hum, false);
-//
-//     cout << "Температура: " << temp << " Влажность: " << hum << endl;
-//     cout << "Вывод Мамдани: " << y_mamdani << endl;
-//     cout << "Вывод Ларсена: " << y_larsen << endl;
-//
-//     return 0;
-// }
