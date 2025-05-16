@@ -2,6 +2,33 @@
 
 using namespace std;
 
+
+std::string Ai[] =
+    {
+        "Очень морозно",
+        "Обычная зимняя погода",
+        "Тепло"
+    };
+std::string Bi[] =
+    {
+        "Высокая влажность",
+        "Средняя влажность",
+        "Низкая влажность"
+
+    };
+std::string Ci[] =
+    {
+        "Очень холодно и сыро",
+        "Холодно с умеренной сыростью",
+        "Холодно и сухо",
+        "Умеренно и сыро",
+        "Комфортная погода",
+        "Умеренно и сухо",
+        "Жарко и душно",
+        "Тепло и комфортно",
+        "Тепло и сухо"
+    };
+
 // Функция принадлежности
 double triangular(double x, double a, double b) {
     if (x < min(a, b) || x > max(a, b))
@@ -10,31 +37,29 @@ double triangular(double x, double a, double b) {
 }
 
 
-// Температура Ai
 double mu_A1(double x) { return triangular(x, -30, -15); }
 double mu_A2(double x) { return triangular(x, -20, -5); }
-double mu_A3(double x) { return triangular(x, -10, 0); }
+double mu_A3(double x) { return triangular(x, 0, -10); }
 
-// Влажность Bi
 double mu_B1(double x) { return triangular(x, 100, 55); }
 double mu_B2(double x) { return triangular(x, 66, 25); }
 double mu_B3(double x) { return triangular(x, 35, 0); }
 
-// Выходные C1-C9
 vector<function<double(double)>> C = {
-    [](double y){ return triangular(y, 40, 0); }, // C1
-    [](double y){ return triangular(y, 45, 25); }, // C2
-    [](double y){ return triangular(y, 50, 30); }, // C3
-    [](double y){ return triangular(y, 55, 35); }, // C4
-    [](double y){ return triangular(y, 60, 40); }, // C5
-    [](double y){ return triangular(y, 65, 45); }, // C6
-    [](double y){ return triangular(y, 80, 60); }, // C7
-    [](double y){ return triangular(y, 85, 65); }, // C8
-    [](double y){ return triangular(y, 100, 70); }  // C9
+    [](double y){ return triangular(y, 40, 0); },
+    [](double y){ return triangular(y, 45, 25); },
+    [](double y){ return triangular(y, 50, 30); },
+    [](double y){ return triangular(y, 55, 35); },
+    [](double y){ return triangular(y, 60, 40); },
+    [](double y){ return triangular(y, 65, 45); },
+    [](double y){ return triangular(y, 80, 60); },
+    [](double y){ return triangular(y, 85, 65); },
+    [](double y){ return triangular(y, 100, 70); }
 };
 
 // Мамдани или Ларсен: min или prod
-double fuzzy_inference(double temp, double hum, bool useMamdani) {
+void fuzzy_inference(double temp, double hum, struct result* res, bool useMamdani)
+{
     vector<function<double(double)>> mu_A = {mu_A1, mu_A2, mu_A3};
     vector<function<double(double)>> mu_B = {mu_B1, mu_B2, mu_B3};
 
@@ -47,6 +72,10 @@ double fuzzy_inference(double temp, double hum, bool useMamdani) {
             double alpha2 = mu_B[j](hum);  // μBj(x2*)
             activation[i * 3 + j] = useMamdani ? min(alpha1, alpha2)
                                                : (alpha1 * alpha2); // агрегирование (отсечение)
+
+            res -> phasificationA[i] = alpha1;
+            res -> phasificationB[j] = alpha2;
+            res -> aggregation[i * 3 + j] = activation[i * 3 + j];
         }
 
     // Шаги 3–5: активизация → аккумуляция → дефаззификация
@@ -67,6 +96,20 @@ double fuzzy_inference(double temp, double hum, bool useMamdani) {
         denominator += mu;
     }
 
-    return (denominator == 0) ? 0 : numerator / denominator; // дефаззификация
+    res -> y0 = (denominator == 0) ? 0 : numerator / denominator; // дефаззификация
+
+
+    // Найти терм C[i], которому принадлежит y0 наиболее сильно
+    int bestIndex = 0;
+    double maxMu = 0.0;
+
+    for (int r = 0; r < lenC; ++r) {
+        double mu = C[r](res -> y0); // степень принадлежности y0
+        if (mu > maxMu) {
+            maxMu = mu;
+            bestIndex = r;
+        }
+    }
+    res -> C = Ci[bestIndex];
 }
 
